@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	customHanlder "invoice-test/internal/handler"
+	"invoice-test/internal/repository"
 	"log"
 	"net/http"
 	"os/signal"
@@ -33,10 +34,13 @@ func main() {
 	fmt.Println(f)
 
 	// web server
-
 	server := http.Server{
 		Addr: ":8080",
 	}
+
+	// init repository
+	repo, _ := repository.NewMysqlRepository(viper.GetViper())
+	fmt.Println(repo)
 
 	handler := &customHanlder.Handler{}
 

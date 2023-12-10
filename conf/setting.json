@@ -1,5 +1,6 @@
 {
   "MYSQL_DB_URL": "localhost:3306",
   "MYSQL_DB_USER": "user",
-  "MYSQL_DB_PASSWORD": "password"
+  "MYSQL_DB_PASSWORD": "password",
+  "MYSQL_DB_NAME": "invoice_test"
 }
