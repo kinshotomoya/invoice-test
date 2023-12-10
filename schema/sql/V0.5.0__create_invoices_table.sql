@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     invoice_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT  COMMENT '請求データID',
     company_id INTEGER UNSIGNED NOT NULL COMMENT '法人ID',
     suppliers_id INTEGER UNSIGNED NOT NULL COMMENT '取引先ID',
-    issueDate DATE NOT NULL COMMENT '発行日',
+    issue_date DATE NOT NULL COMMENT '発行日',
     payment_amount DECIMAL(65,2) NOT NULL COMMENT '支払金額',
     fee DECIMAL(65,1) NOT NULL COMMENT '手数料',
 --  NOTE: それぞれ桁数を最大値まで確保している
