@@ -1,0 +1,45 @@
+version: "3.9"
+
+x-template: &flyway-template
+  image: flyway/flyway:10.2.0
+  volumes:
+    - ./schema/sql:/flyway/sql
+    - ./schema/conf:/flyway/conf
+  depends_on:
+    - db
+
+services:
+  db:
+    image: mysql:8.0.32
+    ports:
+      - 3306:3306
+    container_name: db
+    # NOTE: 認証にpasswordを利用するように設定
+#    command: [
+#      "--default-authentication-plugin=mysql_native_password"
+#    ]
+    volumes:
+      - db-store:/var/lib/mysql
+      - ./dockerfiles/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./schema/sql:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_DATABASE: "invoice_test"
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+  flyway-clean:
+    <<: *flyway-template
+    command: clean
+  flyway-migrate:
+    <<: *flyway-template
+    command: migrate
+  flyway-info:
+    <<: *flyway-template
+    command: info
+  flyway-repair:
+    <<: *flyway-template
+    command: repair
+
+
+volumes:
+  db-store:
