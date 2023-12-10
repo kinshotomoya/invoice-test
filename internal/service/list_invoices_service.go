@@ -1,14 +1,17 @@
 package service
 
-import "invoice-test/internal/repository"
+import (
+	"context"
+	"invoice-test/internal/repository"
+)
 
 type ListInvoiceService struct {
 	MysqlRepository *repository.MysqlRepository
 }
 
-func (l ListInvoiceService) ListInvoices(sessionId string, condition *ListInvoiceCondition) {
+func (l ListInvoiceService) ListInvoices(ctx context.Context, condition *ListInvoiceCondition) {
 	// user取得
-	_, err := l.MysqlRepository.FindUser(sessionId)
+	_, err := l.MysqlRepository.FindUser(ctx.Value("email").(string), ctx.Value("password").(string))
 	if err != nil {
 		return
 	}

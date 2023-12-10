@@ -8,9 +8,9 @@ import (
 
 func (h *Handler) InvoiceHandler(w http.ResponseWriter, r *http.Request) {
 	// cookieからSESSION_ID取得
-	sessionId, err := presentaion.GetSessionId(r)
-	if err != nil || sessionId == nil {
-		http.Error(w, err.Error(), 403)
+	ctx, err := presentaion.GetAuth(r, r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), 401)
 		return
 	}
 
@@ -22,7 +22,7 @@ func (h *Handler) InvoiceHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		h.ListInvoiceService.ListInvoices(*sessionId, condition)
+		h.ListInvoiceService.ListInvoices(ctx, condition)
 		fmt.Println(r.URL.RawQuery)
 	} else {
 		// postの場合

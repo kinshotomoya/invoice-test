@@ -1,10 +1,10 @@
 package repository
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
-	"strconv"
 )
 
 type MysqlRepository struct {
@@ -36,30 +36,37 @@ func NewMysqlRepository(viper *viper.Viper) (*MysqlRepository, error) {
 
 }
 
-func (m MysqlRepository) FindUser(sessionId string) (*User, error) {
-	id, err := strconv.Atoi(sessionId)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := m.client.Query("SELECT user_id, company_id FROM users WHERE user_id = ?", id)
+func (m MysqlRepository) FindUser(email string, password string) (*User, error) {
+	rows, err := m.client.Query("SELECT solt FROM users WHERE email = ?", email)
 	if err != nil {
 		return nil, err
 	}
 
-	users := make([]User, 1)
+	var solt string
 	for rows.Next() {
-		var userId int
-		var companyId int
+		err = rows.Scan(&solt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	hashedPassword := sha256.Sum256([]byte(password + solt))
+	rows, err = m.client.Query("SELECT user_id, company_id FROM users WHERE email = ? AND password = ?", email, hashedPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	var userId int
+	var companyId int
+	for rows.Next() {
 		err = rows.Scan(&userId, &companyId)
 		if err != nil {
 			return nil, err
 		}
-		users[0] = User{
-			userId:    userId,
-			companyId: companyId,
-		}
 	}
-
-	return &users[0], nil
+	return &User{
+		userId:    userId,
+		companyId: companyId,
+	}, nil
 
 }

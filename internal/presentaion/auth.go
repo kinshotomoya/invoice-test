@@ -1,12 +1,17 @@
 package presentaion
 
-import "net/http"
+import (
+	"context"
+	"errors"
+	"net/http"
+)
 
-func GetSessionId(r *http.Request) (*string, error) {
-	cookie, err := r.Cookie("SESSION_ID")
-	if err != nil || cookie.Valid() != nil {
-		return nil, err
+func GetAuth(r *http.Request, ctx context.Context) (context.Context, error) {
+	userName, password, ok := r.BasicAuth()
+	if !ok {
+		return nil, errors.New("authorization required")
 	}
-
-	return &cookie.Value, nil
+	ctx = context.WithValue(ctx, "email", userName)
+	ctx = context.WithValue(ctx, "password", password)
+	return ctx, nil
 }
