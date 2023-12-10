@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	customHanlder "invoice-test/internal/handler"
 	"invoice-test/internal/repository"
+	"invoice-test/internal/service"
 	"log"
 	"net/http"
 	"os/signal"
@@ -38,11 +39,15 @@ func main() {
 		Addr: ":8080",
 	}
 
-	// init repository
-	repo, _ := repository.NewMysqlRepository(viper.GetViper())
-	fmt.Println(repo)
+	// init service
+	mysqlRepository, _ := repository.NewMysqlRepository(viper.GetViper())
+	listInvoiceService := &service.ListInvoiceService{
+		MysqlRepository: mysqlRepository,
+	}
 
-	handler := &customHanlder.Handler{}
+	handler := &customHanlder.Handler{
+		ListInvoiceService: listInvoiceService,
+	}
 
 	http.HandleFunc("/api/invoices", handler.InvoiceHandler)
 
