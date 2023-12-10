@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: invoice_tes API定義書
+servers:
+  - url: "http://localhost:8003"
+paths:
+    /api/invoices:
+      post:
+        description: 請求書作成
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                properties:
+                  payment_amount:
+                    type: integer
+                    nullable: false
+        security:
+          - cookie: []
+        responses:
+          "200":
+            description: 成功レスポンス
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    total_hits:
+                      type: integer
+                      example: 1
+                    last_page:
+                      type: boolean
+                    spot_ids:
+                      type: array
+                      items:
+                        type: string
+          "400":
+            description: bad request
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+          "500":
+            description: server error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+      get:
+        description: 請求書データの一覧
+        parameters:
+          - name: from
+            in: query
+            required: true
+            schema:
+              type: string
+          - name: to
+            in: query
+            required: true
+            schema:
+              type: string
+        responses:
+          "200":
+            description: 成功
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      invoice_id:
+                        type: integer
+                        description: 請求データID
+                      issue_date:
+                        type: string
+                        description: 発行日
+                      payment_amount:
+                        type: number
+                        description: 支払い金額
+                      fee:
+                        type: number
+                        description: 手数料
+                      tax:
+                        type: number
+                        description: 消費税
+                      tax_rate:
+                        type: number
+                        description: 消費税率
+                      total_amount:
+                        type: number
+                        description: 請求金額
+                      payment_due_date:
+                        type: string
+                        description: 支払期日
+          "403":
+            description: authenticate error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Error:
+      type: "object"
+      properties:
+        status_code:
+          type: "integer"
+        message:
+          type: "string"
+  securitySchemes:
+    cookie:
+      description: auth
+      in: cookie
+      type: apiKey
+      name: SESSION_ID
