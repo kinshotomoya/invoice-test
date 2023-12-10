@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
+	"invoice-test/internal/repository/model"
+	"time"
 )
 
 type MysqlRepository struct {
@@ -36,7 +38,56 @@ func NewMysqlRepository(viper *viper.Viper) (*MysqlRepository, error) {
 
 }
 
-func (m MysqlRepository) FindUser(email string, password string) (*User, error) {
+func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListInvoiceCondition) ([]model.Invoice, error) {
+	// TODO: company_idとpayment_due_dateにインデックス張る
+	rows, err := m.client.Query("SELECT * FROM invoices WHERE company_id = ? AND payment_due_date >= ? AND payment_due_date <= ? AND status IN ('PENDING', 'PROCESSING')", user.CompanyId, condition.From, condition.To)
+	if err != nil {
+		return nil, err
+	}
+
+	invoices := make([]model.Invoice, 0)
+	for rows.Next() {
+		var invoiceId uint64
+		var companyId uint64
+		var suppliersId uint64
+		var issueDate time.Time
+		var paymentAmount float64
+		var fee float64
+		var feeRate float64
+		var tax float64
+		var taxRate float64
+		var totalAmount float64
+		var paymentDueDate time.Time
+		var status string
+		err = rows.Scan(&invoiceId, &companyId, &suppliersId, &issueDate, &paymentAmount, &fee, &feeRate, &tax, &taxRate, &totalAmount, &paymentDueDate, &status)
+		if err != nil {
+			return nil, err
+		}
+
+		invoice := model.Invoice{
+			InvoiceId:      invoiceId,
+			CompanyId:      companyId,
+			SuppliersId:    suppliersId,
+			IssueDate:      issueDate,
+			PaymentAmount:  paymentAmount,
+			Fee:            fee,
+			FeeRate:        feeRate,
+			Tax:            tax,
+			TaxRate:        taxRate,
+			TotalAmount:    totalAmount,
+			PaymentDueDate: paymentDueDate,
+			Status:         status,
+		}
+
+		invoices = append(invoices, invoice)
+
+	}
+
+	return invoices, err
+
+}
+
+func (m *MysqlRepository) FindUser(email string, password string) (*model.User, error) {
 	rows, err := m.client.Query("SELECT solt FROM users WHERE email = ?", email)
 	if err != nil {
 		return nil, err
@@ -64,9 +115,9 @@ func (m MysqlRepository) FindUser(email string, password string) (*User, error) 
 			return nil, err
 		}
 	}
-	return &User{
-		userId:    userId,
-		companyId: companyId,
+	return &model.User{
+		UserId:    userId,
+		CompanyId: companyId,
 	}, nil
 
 }
