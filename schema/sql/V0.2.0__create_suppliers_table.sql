@@ -9,3 +9,4 @@ CREATE TABLE IF NOT EXISTS suppliers (
     FOREIGN KEY (company_id) REFERENCES companies(company_id),
     PRIMARY KEY (suppliers_id)
     );
+

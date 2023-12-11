@@ -3,10 +3,10 @@ package repository
 import (
 	"crypto/sha256"
 	"database/sql"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
 	"invoice-test/internal/repository/model"
-	"time"
 )
 
 type MysqlRepository struct {
@@ -40,6 +40,7 @@ func NewMysqlRepository(viper *viper.Viper) (*MysqlRepository, error) {
 
 func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListInvoiceCondition) ([]model.Invoice, error) {
 	// TODO: company_idとpayment_due_dateにインデックス張る
+	fmt.Println(condition.From)
 	rows, err := m.client.Query("SELECT * FROM invoices WHERE company_id = ? AND payment_due_date >= ? AND payment_due_date <= ? AND status IN ('PENDING', 'PROCESSING')", user.CompanyId, condition.From, condition.To)
 	if err != nil {
 		return nil, err
@@ -50,14 +51,14 @@ func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListIn
 		var invoiceId uint64
 		var companyId uint64
 		var suppliersId uint64
-		var issueDate time.Time
+		var issueDate string
 		var paymentAmount float64
 		var fee float64
 		var feeRate float64
 		var tax float64
 		var taxRate float64
 		var totalAmount float64
-		var paymentDueDate time.Time
+		var paymentDueDate string
 		var status string
 		err = rows.Scan(&invoiceId, &companyId, &suppliersId, &issueDate, &paymentAmount, &fee, &feeRate, &tax, &taxRate, &totalAmount, &paymentDueDate, &status)
 		if err != nil {
@@ -101,7 +102,9 @@ func (m *MysqlRepository) FindUser(email string, password string) (*model.User, 
 		}
 	}
 
-	hashedPassword := sha256.Sum256([]byte(password + solt))
+	h := sha256.New()
+	h.Write([]byte(password + solt))
+	hashedPassword := fmt.Sprintf("%x", h.Sum(nil))
 	rows, err = m.client.Query("SELECT user_id, company_id FROM users WHERE email = ? AND password = ?", email, hashedPassword)
 	if err != nil {
 		return nil, err
