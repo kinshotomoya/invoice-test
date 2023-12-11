@@ -2,11 +2,11 @@ package presentaion
 
 import (
 	"errors"
-	"invoice-test/internal/service"
+	"invoice-test/internal/service/model"
 	"net/http"
 )
 
-func NewListInvoiceCondition(r *http.Request) (*service.ListInvoiceCondition, error) {
+func NewListInvoiceCondition(r *http.Request) (*model.ListInvoiceCondition, error) {
 	params := r.URL.Query()
 	var errs error
 	from := params.Get("from")
@@ -20,7 +20,7 @@ func NewListInvoiceCondition(r *http.Request) (*service.ListInvoiceCondition, er
 	if errs != nil {
 		return nil, errs
 	}
-	condition := &service.ListInvoiceCondition{
+	condition := &model.ListInvoiceCondition{
 		From: from,
 		To:   to,
 	}

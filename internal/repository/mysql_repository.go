@@ -3,6 +3,7 @@ package repository
 import (
 	"crypto/sha256"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
@@ -39,8 +40,6 @@ func NewMysqlRepository(viper *viper.Viper) (*MysqlRepository, error) {
 }
 
 func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListInvoiceCondition) ([]model.Invoice, error) {
-	// TODO: company_idとpayment_due_dateにインデックス張る
-	fmt.Println(condition.From)
 	rows, err := m.client.Query("SELECT * FROM invoices WHERE company_id = ? AND payment_due_date >= ? AND payment_due_date <= ? AND status IN ('PENDING', 'PROCESSING')", user.CompanyId, condition.From, condition.To)
 	if err != nil {
 		return nil, err
@@ -95,11 +94,13 @@ func (m *MysqlRepository) FindUser(email string, password string) (*model.User, 
 	}
 
 	var solt string
-	for rows.Next() {
+	if rows.Next() {
 		err = rows.Scan(&solt)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		return nil, errors.New("user not found")
 	}
 
 	h := sha256.New()
@@ -107,20 +108,22 @@ func (m *MysqlRepository) FindUser(email string, password string) (*model.User, 
 	hashedPassword := fmt.Sprintf("%x", h.Sum(nil))
 	rows, err = m.client.Query("SELECT user_id, company_id FROM users WHERE email = ? AND password = ?", email, hashedPassword)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("password not valid: %s", err)
 	}
 
 	var userId int
 	var companyId int
-	for rows.Next() {
+	if rows.Next() {
 		err = rows.Scan(&userId, &companyId)
 		if err != nil {
 			return nil, err
 		}
+		return &model.User{
+			UserId:    userId,
+			CompanyId: companyId,
+		}, nil
+	} else {
+		return nil, errors.New("user not found")
 	}
-	return &model.User{
-		UserId:    userId,
-		CompanyId: companyId,
-	}, nil
 
 }

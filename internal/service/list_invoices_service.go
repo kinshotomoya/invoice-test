@@ -11,7 +11,7 @@ type ListInvoiceService struct {
 	MysqlRepository *repository.MysqlRepository
 }
 
-func (l ListInvoiceService) ListInvoices(ctx context.Context, condition *ListInvoiceCondition) ([]serviceModel.Invoice, error) {
+func (l ListInvoiceService) ListInvoices(ctx context.Context, condition *serviceModel.ListInvoiceCondition) ([]serviceModel.Invoice, error) {
 	user, err := l.MysqlRepository.FindUser(ctx.Value("email").(string), ctx.Value("password").(string))
 	if err != nil {
 		return nil, err
