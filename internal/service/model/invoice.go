@@ -19,7 +19,7 @@ type Invoice struct {
 	Status         string
 }
 
-func NewInvoice(invoice model.Invoice) Invoice {
+func NewInvoice(invoice *model.Invoice) Invoice {
 	return Invoice{
 		InvoiceId:      invoice.InvoiceId,
 		CompanyId:      invoice.CompanyId,

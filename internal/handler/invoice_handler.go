@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"fmt"
 	"invoice-test/internal/presentaion"
 	"invoice-test/internal/presentaion/model"
+	serviceModel "invoice-test/internal/service/model"
 	"net/http"
 )
 
@@ -27,7 +27,7 @@ func (h *Handler) InvoiceHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		response, err := model.ConvertToResponse(invoices)
+		response, err := model.ConvertToListResponse(invoices)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -37,9 +37,30 @@ func (h *Handler) InvoiceHandler(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// postの場合
-		// TODO: 請求書データの作成
-		body := r.Body
-		defer body.Close()
-		fmt.Println(body)
+		condition, err := model.NewPostInvoiceCondition(r)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		serviceCondition := &serviceModel.PostInvoiceCondition{
+			SuppliersId:    condition.SuppliersId,
+			PaymentAmount:  condition.PaymentAmount,
+			PaymentDueDate: condition.PaymentDueDate,
+		}
+
+		invoice, err := h.PostInvoiceService.PostInvoice(ctx, serviceCondition)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		response, err := model.ConvertToResponse(invoice)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.WriteHeader(200)
+		w.Write(response)
+
 	}
 }

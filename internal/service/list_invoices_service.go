@@ -29,7 +29,7 @@ func (l ListInvoiceService) ListInvoices(ctx context.Context, condition *service
 
 	resInvoices := make([]serviceModel.Invoice, len(invoices))
 	for i := range invoices {
-		resInvoices[i] = serviceModel.NewInvoice(invoices[i])
+		resInvoices[i] = serviceModel.NewInvoice(&invoices[i])
 	}
 	return resInvoices, nil
 }

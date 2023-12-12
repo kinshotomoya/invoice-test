@@ -21,7 +21,31 @@ type Invoice struct {
 	Status         string  `json:"status"`
 }
 
-func ConvertToResponse(invoices []serviceModel.Invoice) ([]byte, error) {
+func ConvertToResponse(invoice *serviceModel.Invoice) ([]byte, error) {
+	var buf bytes.Buffer
+	resInvoice := Invoice{
+		InvoiceId:      invoice.InvoiceId,
+		CompanyId:      invoice.CompanyId,
+		SuppliersId:    invoice.SuppliersId,
+		IssueDate:      invoice.IssueDate,
+		PaymentAmount:  invoice.PaymentAmount,
+		Fee:            invoice.Fee,
+		FeeRate:        invoice.FeeRate,
+		Tax:            invoice.Tax,
+		TaxRate:        invoice.TaxRate,
+		TotalAmount:    invoice.TotalAmount,
+		PaymentDueDate: invoice.PaymentDueDate,
+		Status:         invoice.Status,
+	}
+	err := json.NewEncoder(&buf).Encode(resInvoice)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func ConvertToListResponse(invoices []serviceModel.Invoice) ([]byte, error) {
 
 	var buf bytes.Buffer
 	resInvoices := make([]Invoice, len(invoices))

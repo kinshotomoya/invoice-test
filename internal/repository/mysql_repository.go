@@ -45,6 +45,42 @@ func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListIn
 		return nil, err
 	}
 
+	invoices, err := scanInvoices(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return invoices, err
+
+}
+
+func (m *MysqlRepository) PostInvoice(user *model.User, condition *model.PostInvoiceCondition) (*model.Invoice, error) {
+	prepare, err := m.client.Prepare("INSERT INTO invoices(company_id, suppliers_id, issue_date, payment_amount, fee, fee_rate, tax, tax_rate, total_amount, payment_due_date, status) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+	if err != nil {
+		return nil, err
+	}
+	result, err := prepare.Exec(user.CompanyId, condition.SuppliersId, condition.IssueDate, condition.PaymentAmount, condition.Fee, condition.FeeRate, condition.Tax, condition.TaxRate, condition.TotalAmount, condition.PaymentDueDate, condition.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := m.client.Query("SELECT * FROM invoices WHERE invoice_id = ?", id)
+	invoices, err := scanInvoices(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &invoices[0], nil
+
+}
+
+func scanInvoices(rows *sql.Rows) ([]model.Invoice, error) {
+	var err error
 	invoices := make([]model.Invoice, 0)
 	for rows.Next() {
 		var invoiceId uint64
@@ -84,7 +120,6 @@ func (m *MysqlRepository) ListInvoices(user *model.User, condition *model.ListIn
 	}
 
 	return invoices, err
-
 }
 
 func (m *MysqlRepository) FindUser(email string, password string) (*model.User, error) {

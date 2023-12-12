@@ -45,8 +45,13 @@ func main() {
 		MysqlRepository: mysqlRepository,
 	}
 
+	postInvoiceService := &service.PostInvoiceService{
+		MysqlRepository: mysqlRepository,
+	}
+
 	handler := &customHanlder.Handler{
 		ListInvoiceService: listInvoiceService,
+		PostInvoiceService: postInvoiceService,
 	}
 
 	http.HandleFunc("/api/invoices", handler.InvoiceHandler)
