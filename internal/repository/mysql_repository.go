@@ -162,3 +162,12 @@ func (m *MysqlRepository) FindUser(email string, password string) (*model.User, 
 	}
 
 }
+
+func (m *MysqlRepository) Close() error {
+	err := m.client.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

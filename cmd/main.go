@@ -78,10 +78,15 @@ func main() {
 
 	serverShutDownCtx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
 	defer cancel()
+
 	err = server.Shutdown(serverShutDownCtx)
 	if err != nil {
 		log.Printf("fatal server shutdown grafefully")
-		return
+	}
+
+	err = mysqlRepository.Close()
+	if err != nil {
+		log.Printf("error db close: %s", err.Error())
 	}
 
 	log.Println("process exit")
