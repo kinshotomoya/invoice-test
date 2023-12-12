@@ -113,8 +113,6 @@ components:
         message:
           type: "string"
   securitySchemes:
-    cookie:
-      description: auth
-      in: cookie
-      type: apiKey
-      name: SESSION_ID
+    BasicAuth:
+      type: http
+      scheme: basic
