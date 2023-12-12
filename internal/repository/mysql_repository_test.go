@@ -154,3 +154,119 @@ func TestFindUser(t *testing.T) {
 		})
 	})
 }
+
+func TestMysqlRepositoryPostInvoice(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	t.Run("正常系", func(t *testing.T) {
+		t.Run("請求データ生成に成功する場合", func(t *testing.T) {
+			mock.ExpectPrepare(regexp.QuoteMeta(`INSERT INTO invoices(company_id, suppliers_id, issue_date, payment_amount, fee, fee_rate, tax, tax_rate, total_amount, payment_due_date, status) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)).
+				ExpectExec().WithArgs(1, 1, "2023-12-13", 1000.0, 40.0, 0.04, 4.0, 0.1, 1044.0, "2023-12-13", "PENDING").WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM invoices WHERE invoice_id = ?`)).
+				WithArgs(1).
+				WillReturnRows(sqlmock.NewRows([]string{"invoice_id", "company_id", "suppliers_id", "issue_date", "payment_amount", "fee", "fee_rate", "tax", "tax_rate", "total_amount", "payment_due_date", "status"}).
+					AddRow(1, 1, 1, "2023-12-13", 1000.0, 40.0, 0.04, 4.0, 0.1, 1044.0, "2023-12-13", "PENDING"))
+			repo := MysqlRepository{
+				client: db,
+			}
+			user := &model.User{
+				UserId:    1,
+				CompanyId: 1,
+			}
+			condition := &model.PostInvoiceCondition{
+				SuppliersId:    1,
+				IssueDate:      "2023-12-13",
+				PaymentAmount:  1000.0,
+				Fee:            40.0,
+				FeeRate:        0.04,
+				Tax:            4.0,
+				TaxRate:        0.1,
+				TotalAmount:    1044.0,
+				PaymentDueDate: "2023-12-13",
+				Status:         "PENDING",
+			}
+			res, _ := repo.PostInvoice(user, condition)
+			assert.Equal(t, 1, int(res.InvoiceId))
+		})
+	})
+
+	t.Run("異常系", func(t *testing.T) {
+		t.Run("prepareクエリが失敗する場合", func(t *testing.T) {
+			mock.ExpectPrepare(regexp.QuoteMeta(`INSERT INTO invoices(company_id, suppliers_id, issue_date, payment_amount, fee, fee_rate, tax, tax_rate, total_amount, payment_due_date, status) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)).WillReturnError(errors.New("prepare error"))
+			repo := MysqlRepository{
+				client: db,
+			}
+			user := &model.User{
+				UserId:    1,
+				CompanyId: 1,
+			}
+			condition := &model.PostInvoiceCondition{
+				SuppliersId:    1,
+				IssueDate:      "2023-12-13",
+				PaymentAmount:  1000,
+				Fee:            40.0,
+				FeeRate:        0.04,
+				Tax:            4,
+				TaxRate:        0.1,
+				TotalAmount:    1044.0,
+				PaymentDueDate: "2023-12-13",
+				Status:         "PENDING",
+			}
+			_, err := repo.PostInvoice(user, condition)
+			assert.EqualError(t, err, "prepare error")
+		})
+
+		t.Run("insertクエリが失敗する場合", func(t *testing.T) {
+			mock.ExpectPrepare(regexp.QuoteMeta(`INSERT INTO invoices(company_id, suppliers_id, issue_date, payment_amount, fee, fee_rate, tax, tax_rate, total_amount, payment_due_date, status) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)).
+				ExpectExec().WithArgs(1, 1, "2023-12-13", 1000.0, 40.0, 0.04, 4.0, 0.1, 1044.0, "2023-12-13", "PENDING").WillReturnError(errors.New("exec error"))
+			repo := MysqlRepository{
+				client: db,
+			}
+			user := &model.User{
+				UserId:    1,
+				CompanyId: 1,
+			}
+			condition := &model.PostInvoiceCondition{
+				SuppliersId:    1,
+				IssueDate:      "2023-12-13",
+				PaymentAmount:  1000.0,
+				Fee:            40.0,
+				FeeRate:        0.04,
+				Tax:            4.0,
+				TaxRate:        0.1,
+				TotalAmount:    1044.0,
+				PaymentDueDate: "2023-12-13",
+				Status:         "PENDING",
+			}
+			_, err := repo.PostInvoice(user, condition)
+			assert.EqualError(t, err, "exec error")
+		})
+
+		t.Run("取得するカラムが適切でない場合", func(t *testing.T) {
+			mock.ExpectPrepare(regexp.QuoteMeta(`INSERT INTO invoices(company_id, suppliers_id, issue_date, payment_amount, fee, fee_rate, tax, tax_rate, total_amount, payment_due_date, status) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)).
+				ExpectExec().WithArgs(1, 1, "2023-12-13", 1000.0, 40.0, 0.04, 4.0, 0.1, 1044.0, "2023-12-13", "PENDING").WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM invoices WHERE invoice_id = ?`)).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{}).AddRow())
+			repo := MysqlRepository{
+				client: db,
+			}
+			user := &model.User{
+				UserId:    1,
+				CompanyId: 1,
+			}
+			condition := &model.PostInvoiceCondition{
+				SuppliersId:    1,
+				IssueDate:      "2023-12-13",
+				PaymentAmount:  1000.0,
+				Fee:            40.0,
+				FeeRate:        0.04,
+				Tax:            4.0,
+				TaxRate:        0.1,
+				TotalAmount:    1044.0,
+				PaymentDueDate: "2023-12-13",
+				Status:         "PENDING",
+			}
+			_, err := repo.PostInvoice(user, condition)
+			assert.EqualError(t, err, "sql: expected 0 destination arguments in Scan, not 12")
+		})
+
+	})
+}

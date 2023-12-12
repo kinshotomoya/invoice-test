@@ -8,6 +8,7 @@ import (
 
 type PostInvoiceService struct {
 	MysqlRepository *repository.MysqlRepository
+	CustomTime      serviceModel.CustomTimeInterface
 }
 
 func (s PostInvoiceService) PostInvoice(ctx context.Context, postInvoiceCondition *serviceModel.PostInvoiceCondition) (*serviceModel.Invoice, error) {
@@ -16,7 +17,7 @@ func (s PostInvoiceService) PostInvoice(ctx context.Context, postInvoiceConditio
 		return nil, err
 	}
 
-	condition := postInvoiceCondition.NewPostInvoiceCondition()
+	condition := postInvoiceCondition.NewPostInvoiceCondition(s.CustomTime)
 
 	invoices, err := s.MysqlRepository.PostInvoice(user, condition)
 

@@ -2,7 +2,6 @@ package model
 
 import (
 	"invoice-test/internal/repository/model"
-	"time"
 )
 
 const FeeRate = 0.04
@@ -14,8 +13,8 @@ type PostInvoiceCondition struct {
 	PaymentDueDate *string
 }
 
-func (p *PostInvoiceCondition) NewPostInvoiceCondition() *model.PostInvoiceCondition {
-	now := time.Now().Format(time.DateOnly)
+func (p *PostInvoiceCondition) NewPostInvoiceCondition(customTime CustomTimeInterface) *model.PostInvoiceCondition {
+	now := customTime.NowDateOnly()
 	fee := *p.PaymentAmount * FeeRate
 	tax := fee * TaxRate
 	totalAmount := *p.PaymentAmount + fee + tax

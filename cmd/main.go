@@ -8,6 +8,7 @@ import (
 	customHanlder "invoice-test/internal/handler"
 	"invoice-test/internal/repository"
 	"invoice-test/internal/service"
+	"invoice-test/internal/service/model"
 	"log"
 	"net/http"
 	"os/signal"
@@ -45,8 +46,14 @@ func main() {
 		MysqlRepository: mysqlRepository,
 	}
 
+	customTime, err := model.NewCustomTime()
+	if err != nil {
+		panic(err)
+	}
+
 	postInvoiceService := &service.PostInvoiceService{
 		MysqlRepository: mysqlRepository,
+		CustomTime:      customTime,
 	}
 
 	handler := &customHanlder.Handler{
@@ -71,7 +78,7 @@ func main() {
 
 	serverShutDownCtx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
 	defer cancel()
-	err := server.Shutdown(serverShutDownCtx)
+	err = server.Shutdown(serverShutDownCtx)
 	if err != nil {
 		log.Printf("fatal server shutdown grafefully")
 		return
